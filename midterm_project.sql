@@ -33,7 +33,11 @@ create table employees (
 	hire_date			DATE			NOT NULL,
 	role				VARCHAR(100)	NOT NULL,
 	salary				int				NOT NULL		CHECK (salary > 0),
-    age					int				NOT NULL		CHECK (age > 0)
+    age					int				NOT NULL		CHECK (age > 0),
+    
+    CONSTRAINT CK_employees_salary CHECK (salary > 0),
+    CONSTRAINT CK_employees_age CHECK (age > 0),
+    CONSTRAINT UQ_employees_email UNIQUE (email)
 );
 
 -- Create the Customers Table
