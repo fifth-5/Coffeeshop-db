@@ -85,6 +85,14 @@ CREATE TABLE vendor_supplies (
 		REFERENCES menu_items (menu_item_id) ON DELETE CASCADE
 );
 
+CREATE TABLE order_employees (
+    order_id INT NOT NULL,
+    employee_id INT NOT NULL,
+    PRIMARY KEY (order_id, employee_id),
+    CONSTRAINT FK_order_employees_orders FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE,
+    CONSTRAINT FK_order_employees_employees FOREIGN KEY (employee_id) REFERENCES employees(employee_id) ON DELETE CASCADE
+);
+
 INSERT INTO wholesale_vendors VALUES
 (1, 'Coffee Beans Co.', '123 Bean St', NULL, 'Seattle', 'WA', '98101', '555-111-2222'),
 (2, 'Roasters Delight', '456 Roast Ave', NULL, 'Portland', 'OR', '97202', '555-222-3333'),
@@ -170,3 +178,15 @@ INSERT INTO vendor_supplies (vendor_id, menu_item_id, last_supply_date) VALUES
 (8, 8, '2025-02-16'),
 (9, 9, '2025-02-18'),
 (10, 10, '2025-02-20');
+
+INSERT INTO order_employees (order_id, employee_id) VALUES
+(1, 2),
+(1, 3),
+(2, 1),
+(2, 4),
+(3, 2),
+(3, 5),
+(4, 1),
+(4, 3),
+(5, 4),
+(5, 5);
