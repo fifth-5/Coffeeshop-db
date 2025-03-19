@@ -1,6 +1,48 @@
 use coffee_shop;
 
+-- INDEXES --
+
+/*
+Indexes
+You already know the queries used in the above problems.
+Now, institute indexes for those queries 
+using the guidance from For the Final Group Project: Notes about Indexes listed from under Week 8
+*/
+
+-- INDEXES FOR ORDERS TABLE
+CREATE INDEX idx_orders_customer_id ON orders(customer_id);
+CREATE INDEX idx_orders_order_date ON orders(order_date);
+
+-- INDEXES FOR ORDER_DETAILS TABLE
+CREATE INDEX idx_order_details_order_id ON order_details(order_id);
+CREATE INDEX idx_order_details_menu_item_id ON order_details(menu_item_id);
+CREATE INDEX idx_order_details_order_item ON order_details(order_id, menu_item_id);
+
+-- INDEXES FOR MENU_ITEMS TABLE
+CREATE INDEX idx_menu_items_price ON menu_items(price);
+
+-- INDEXES FOR EMPLOYEES TABLE
+CREATE INDEX idx_employees_salary ON employees(salary);
+CREATE INDEX idx_employees_salary_filter ON employees(salary);
+
+-- INDEXES FOR VENDOR_SUPPLIES TABLE
+CREATE INDEX idx_vendor_supplies_menu_item_id ON vendor_supplies(menu_item_id);
+CREATE INDEX idx_vendor_supplies_vendor_id ON vendor_supplies(vendor_id);
+
+-- INDEXES FOR STORED FUNCTION PERFORMANCE
+CREATE INDEX idx_orders_employee_id ON orders(order_id);
+CREATE INDEX idx_menu_items_menu_item ON menu_items(menu_item_id);
+CREATE INDEX idx_order_employees_employee ON order_employees(employee_id);
+
+
 -- SUBQUERY --
+
+/*
+Subquery
+Can involve 1 or more tables
+Can be correlated or non-correlated
+The clause of the Select Statement that the sub-query is listed is up to your team 
+*/
 
 /* this is a query that retrieves employees who have a salary greater than the average salary of all employees.
 (This is a non-correlated subquery because it runs independently before the main query executes) */
@@ -10,6 +52,14 @@ FROM employees
 WHERE salary > (SELECT AVG(salary) FROM employees);
 
 -- UPDATABLE SINGLE TABLE VIEW --
+
+/*
+Updatable Single Table View
+Make sure the Single Table View created is updatable
+Issue a query against the Updatable Single-Table View before the Insert or Update statement is made through the view to see the original state of the data
+Next, issue an Update or Insert Statement against the View to make a change in the state of the data
+Next, issue the same query against the view to show the state of the data changed because of the Insert or Update Statement
+*/
 
 /* this is an updatable view for employees that allows modifications. */
 
@@ -32,6 +82,16 @@ WHERE employee_id = 5;
 SELECT * FROM vw_employee_salary_info;
 
 -- STORED PROCEDURE --
+
+/*
+Stored Procedure
+Code a SPROC that uses a combination of Cursor, Loop, If Statement (or Case Statement) and necessary select statement(s) against the database to calculate a value
+Note: While and If Statement can be used for controlling how many times the Cursor For Loop executes
+We also need to have an If Statement whose branches will vary in how the calculation is implemented. 
+At the end of the SPROC's execution, the calculated value is printed out
+Use the Call Statement to execute the SPROC
+If your SROC takes in a parameter value, then call the SPROC with a parameter value
+*/
 
 DROP PROCEDURE IF EXISTS sp_calculate_order_revenue;
 DELIMITER //
@@ -75,51 +135,56 @@ CALL sp_calculate_order_revenue();
 
 -- STORED FUNCTION --
 
--- Drop the procedure if it already exists
-DROP PROCEDURE IF EXISTS fn_calculate_employee_revenue;
+/*
+Stored Function
+Code a Select Statement that in its Select Clause calls a Stored Function
+The Stored Function calculates a value so that when the Select Statement is executed, the value calculated by the Stored Function is printed out
+The Stored Function uses a combination of an If Statement (or Case Statement) and necessary select statement(s) against the database to calculate and return a value
+If your Stored Function takes in a parameter value, then execute the Stored Function with a parameter value
 
--- Create the stored procedure
+*/
+
+DROP FUNCTION IF EXISTS fn_calculate_employee_revenue;
+
 DELIMITER $$
-CREATE PROCEDURE fn_calculate_employee_revenue(IN employee_id INT)
+
+CREATE FUNCTION fn_calculate_employee_revenue(employee_id INT) 
+RETURNS DECIMAL(10,2)
+DETERMINISTIC
 BEGIN
-    DECLARE total_revenue DECIMAL(10, 2) DEFAULT 0;
-    DECLARE order_total DECIMAL(10, 2);
-    DECLARE done INT DEFAULT 0;
+    DECLARE total_revenue DECIMAL(10,2) DEFAULT 0;
 
-    -- Declare a cursor to fetch orders processed by the employee
-    DECLARE order_cursor CURSOR FOR
-        SELECT o.total_price
-        FROM orders o
-        JOIN employees e ON o.order_id = e.employee_id -- Assuming employees process orders
-        WHERE e.employee_id = employee_id;
+    -- Calculate total revenue for the given employee based on items they handled
+    SELECT COALESCE(SUM(od.quantity * mi.price), 0)
+    INTO total_revenue
+    FROM order_details od
+    JOIN menu_items mi ON od.menu_item_id = mi.menu_item_id
+    JOIN order_employees oe ON od.order_id = oe.order_id
+    WHERE oe.employee_id = employee_id; 
 
-    -- Declare a handler for the end of the cursor
-    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
-
-    -- Open the cursor
-    OPEN order_cursor;
-
-    -- Loop through the cursor
-    order_loop: LOOP
-        FETCH order_cursor INTO order_total;
-        IF done = 1 THEN
-            LEAVE order_loop;
-        END IF;
-        SET total_revenue = total_revenue + order_total;
-    END LOOP;
-
-    -- Close the cursor
-    CLOSE order_cursor;
-
-    -- Print the total revenue
-    SELECT CONCAT('Total revenue generated by employee ', employee_id, ' is $', total_revenue) AS result;
+    -- Return the total revenue
+    RETURN total_revenue;
 END$$
+
 DELIMITER ;
 
--- Call the stored procedure for employee_id = 1
-CALL fn_calculate_employee_revenue(1);
+SELECT fn_calculate_employee_revenue(1) AS total_revenue;
 
 -- MULTI TABLE QUERY --
+
+/*
+Multi-Table Query
+Tables to use? Your team's choice
+Clauses that MUST be used
+Select
+From
+Group By
+Where
+Having
+Order By
+In the Select Clause
+you need to use a built-in Function offered by SQL 
+*/
 
 -- Select relevant customer and order details along with total order value
 SELECT 
